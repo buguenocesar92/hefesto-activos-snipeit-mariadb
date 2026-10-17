@@ -1,0 +1,81 @@
+name: ${COMPOSE_PROJECT_NAME:?Run scripts/configure.py}
+services:
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: snipeit
+      MARIADB_USER: snipeit
+      MARIADB_PASSWORD: ${DB_PASSWORD:?Generate .env}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Generate .env}
+    volumes: [database:/var/lib/mysql]
+    networks: [backend]
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    logging: &logging
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+  app:
+    image: snipe/snipe-it:v8.8.0@sha256:973da940ffcca77ccd31fd0197e182b8b8614531bf3e8ed7f8665b83722c67ce
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY:?Generate .env}
+      APP_URL: https://${ASSETS_HOST:?Set domain}
+      APP_TIMEZONE: America/Santiago
+      APP_LOCALE: es-ES
+      APP_FORCE_TLS: "true"
+      SECURE_COOKIES: "true"
+      APP_TRUSTED_PROXIES: ${APP_TRUSTED_PROXIES:-127.0.0.1}
+      DB_CONNECTION: mariadb
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_DATABASE: snipeit
+      DB_USERNAME: snipeit
+      DB_PASSWORD: ${DB_PASSWORD:?Generate .env}
+      DB_CHARSET: utf8mb4
+      DB_COLLATION: utf8mb4_unicode_ci
+      DB_SSL: "false"
+      PRIVATE_FILESYSTEM_DISK: local
+      PUBLIC_FILESYSTEM_DISK: local_public
+      CACHE_DRIVER: file
+      SESSION_DRIVER: file
+      QUEUE_CONNECTION: sync
+      ALLOW_BACKUP_DELETE: "false"
+      ALLOW_DATA_PURGE: "false"
+      IMAGE_LIB: gd
+      LOG_CHANNEL: stderr
+      MAIL_MAILER: smtp
+      MAIL_HOST: ${SMTP_HOST:-127.0.0.1}
+      MAIL_PORT: ${SMTP_PORT:-2525}
+      MAIL_USERNAME: ${SMTP_USERNAME:-null}
+      MAIL_PASSWORD: ${SMTP_PASSWORD:-null}
+      MAIL_TLS_VERIFY_PEER: "true"
+      MAIL_FROM_ADDR: ${MAIL_FROM:-activos@example.invalid}
+      MAIL_FROM_NAME: Hefesto Activos
+      MAIL_REPLYTO_ADDR: ${MAIL_FROM:-activos@example.invalid}
+      MAIL_REPLYTO_NAME: Hefesto Activos
+    volumes: [storage:/var/lib/snipeit]
+    expose: ["80"]
+    networks: [default, backend]
+    depends_on:
+      db: {condition: service_healthy}
+    healthcheck:
+      test: [CMD-SHELL, "curl -fsS --max-time 8 http://127.0.0.1/login >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 180s
+      retries: 10
+    logging: *logging
+volumes:
+  database:
+    name: ${DB_VOLUME:?Run scripts/configure.py}
+  storage:
+    name: ${STORAGE_VOLUME:?Run scripts/configure.py}
+networks:
+  backend:
+  default:

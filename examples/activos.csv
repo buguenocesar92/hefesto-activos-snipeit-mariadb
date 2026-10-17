@@ -1,0 +1,3 @@
+etiqueta,nombre,serie,modelo,categoria,ubicacion,estado,notas
+DEMO-NB-0001,Notebook de demostracion,SERIE-FICTICIA-001,Modelo ejemplo,Notebook,Oficina de prueba,Por mapear,Datos ficticios; mapear en importador
+DEMO-MON-0001,Monitor de demostracion,SERIE-FICTICIA-002,Monitor ejemplo,Monitor,Oficina de prueba,Por mapear,Datos ficticios; mapear en importador

@@ -1,0 +1,8 @@
+# Solo primer acceso por tunel SSH; no publicar el asistente de instalacion.
+services:
+  app:
+    environment:
+      APP_URL: http://127.0.0.1:8000
+      APP_FORCE_TLS: "false"
+      SECURE_COOKIES: "false"
+    ports: ["127.0.0.1:8000:80"]
