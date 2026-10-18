@@ -36,5 +36,5 @@ Inicio orientativo para pocos usuarios:2vCPU,2GB RAM y20GB SSD más documentos/r
 Coolify levanta este compose detrás de Traefik con TLS. Las únicas variables que Coolify debe inyectar son las del runtime (`ASSETS_HOST`, `APP_KEY`, `DB_PASSWORD`, `DB_ROOT_PASSWORD` y, opcionalmente, `APP_TRUSTED_PROXIES`, `SMTP_*` y `MAIL_FROM`). El nombre del proyecto y los nombres de los volúmenes los pone Coolify automáticamente.
 
 - **Asistente web:** completar primero por túnel SSH (`compose.bootstrap.yaml` expone `127.0.0.1:8000`). Si se asigna el dominio antes de cerrar el asistente, queda público en Internet.
-- **`APP_TRUSTED_PROXIES`** tiene default `10.0.0.0/8` (CIDR de Traefik). Ajustar si Traefik vive en otra red Docker.
+- **`APP_TRUSTED_PROXIES`** tiene default `172.17.0.1/32` (gateway del bridge Docker por defecto). **Sobrescribir siempre en producción** con la IP o CIDR exacto del proxy real (`IP_O_CIDR_DEL_PROXY_REAL` en `.env.example`); este valor controla de qué procedencia se aceptan los encabezados `X-Forwarded-For`/`X-Forwarded-Proto`.
 - **SMTP** apunta por defecto a `127.0.0.1:2525` sin servidor: la instancia inicia pero no entrega correo. Configurar `SMTP_HOST`/`SMTP_PORT`/`SMTP_USERNAME`/`SMTP_PASSWORD`/`MAIL_FROM` con los datos del proveedor antes de habilitar invitaciones y recuperaciones.

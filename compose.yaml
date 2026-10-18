@@ -29,7 +29,7 @@ services:
       APP_LOCALE: es-ES
       APP_FORCE_TLS: "true"
       SECURE_COOKIES: "true"
-      APP_TRUSTED_PROXIES: ${APP_TRUSTED_PROXIES:-10.0.0.0/8}
+      APP_TRUSTED_PROXIES: ${APP_TRUSTED_PROXIES:-172.17.0.1/32}
       DB_CONNECTION: mariadb
       DB_HOST: db
       DB_PORT: "3306"
