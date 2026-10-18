@@ -16,18 +16,25 @@ WORK_DIR=$(mktemp -d)
 trap 'rm -rf "$WORK_DIR"' EXIT
 ENV_FILE="$WORK_DIR/.env"
 
-# Variables detectadas en compose.yaml. Las de host/URL usan ejemplo.invalid;
-# el resto, valores ficticios no secretos (no se usan en este script).
-cat > "$ENV_FILE" <<EOF
-COMPOSE_PROJECT_NAME=hefesto-activos-test
-DB_VOLUME=hefesto-activos-test-db
-STORAGE_VOLUME=hefesto-activos-test-storage
-ASSETS_HOST=ejemplo.invalid
+# Variables detectadas en compose.yaml. Cada ${VAR} del compose se asigna a un
+# valor ficticio no secreto; las *_HOST y *_URL reciben ejemplo.invalid (las
+# de URL sin esquema porque el compose antepone https://). Tras la lista
+# automática se sobrescriben las que requieren un formato concreto
+# (APP_KEY como base64 valido, SMTP_PORT numerico, MAIL_FROM como direccion).
+FAKE_VALUE='x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd'
+HOST_VALUE='ejemplo.invalid'
+
+: > "$ENV_FILE"
+VARS=$(grep -oE '\$\{[A-Za-z_][A-Za-z0-9_]*' "$COMPOSE_FILE" | cut -c3- | sort -u || true)
+for var in $VARS; do
+  case "$var" in
+    *_HOST|*_URL) echo "$var=$HOST_VALUE" >> "$ENV_FILE" ;;
+    *)           echo "$var=$FAKE_VALUE" >> "$ENV_FILE" ;;
+  esac
+done
+# Sobrescrituras puntuales (formato concreto que Compose o el chequeo esperan):
+cat >> "$ENV_FILE" <<EOF
 APP_KEY=base64:dGVzdC1rZXktbm90LWEtcmVhbC1zZWNyZXQtdGVzdC1rZXktbm90LWEtcmVhbC1zZWNyZXQ=
-DB_PASSWORD=x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd
-DB_ROOT_PASSWORD=x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd
-APP_TRUSTED_PROXIES=10.0.0.0/8
-SMTP_HOST=ejemplo.invalid
 SMTP_PORT=587
 SMTP_USERNAME=null
 SMTP_PASSWORD=null
@@ -86,6 +93,20 @@ for svc in $SERVICES; do
         else false end
       )' >/dev/null; then
     fail "$svc: bindea docker.sock (clausula 1)"
+  fi
+
+  # Bind fuera del repo (clausula 1): la fuente debe comenzar con $PWD/
+  # o ser igual a $PWD; cualquier otra cosa (ruta absoluta arbitraria,
+  # Docker socket, /etc, $HOME, etc.) queda prohibida.
+  violator=$(echo "$svc_json" | jq -r --arg pwd "$PWD" '
+      [.volumes // []
+       | .[]
+       | select((.type // "bind") == "bind")
+       | .source // ""]
+      | map(select(. != "" and (startswith($pwd + "/") | not) and (. != $pwd)))[0] // empty
+    ')
+  if [ -n "$violator" ]; then
+    fail "$svc: bind fuera del repo '$violator' (clausula 1)"
   fi
 done
 
