@@ -1,4 +1,3 @@
-name: ${COMPOSE_PROJECT_NAME:?Run scripts/configure.py}
 services:
   db:
     image: mariadb:11.4
@@ -30,7 +29,7 @@ services:
       APP_LOCALE: es-ES
       APP_FORCE_TLS: "true"
       SECURE_COOKIES: "true"
-      APP_TRUSTED_PROXIES: ${APP_TRUSTED_PROXIES:-127.0.0.1}
+      APP_TRUSTED_PROXIES: ${APP_TRUSTED_PROXIES:-10.0.0.0/8,172.16.0.0/12}
       DB_CONNECTION: mariadb
       DB_HOST: db
       DB_PORT: "3306"
@@ -73,9 +72,7 @@ services:
     logging: *logging
 volumes:
   database:
-    name: ${DB_VOLUME:?Run scripts/configure.py}
   storage:
-    name: ${STORAGE_VOLUME:?Run scripts/configure.py}
 networks:
   backend:
   default:
