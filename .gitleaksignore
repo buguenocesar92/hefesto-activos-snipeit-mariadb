@@ -1,0 +1,13 @@
+# Huellas exactas de hallazgos de gitleaks que NO son secretos.
+#
+# 2c74cce (scripts/coolify-check.sh): el verificador del contrato de Coolify
+# traia dos valores de EJEMPLO written en el propio script como documentacion
+# de formato ("x1234567890abcdef..." repetido). No son credenciales: no abren
+# ningun servicio y no se usan en ningun despliegue. Se ignoran solo esas dos
+# huellas exactas, no el archivo entero.
+#
+# Comprobacion negativa de que esta lista no deja ciega la puerta: si se
+# siembra un AWS_SECRET_ACCESS_KEY de verdad fuera de la plantilla, gitleaks
+# sigue saltando (exit 1).
+2c74ccec7687c226ad6163ac40190b9bf7a36cfa:scripts/coolify-check.sh:generic-api-key:27
+2c74ccec7687c226ad6163ac40190b9bf7a36cfa:scripts/coolify-check.sh:generic-api-key:28
